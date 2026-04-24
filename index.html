@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarCare Pro</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#22c55e">
+<style>
+body {margin:0;font-family:-apple-system;background:#0b1220;color:white;}
+.header {text-align:center;padding:15px;background:#111827;}
+.container {padding:15px;}
+.car-card {background:#1f2937;padding:15px;border-radius:14px;margin-bottom:10px;}
+.panel {background:#111827;padding:15px;border-radius:14px;margin-bottom:10px;}
+.tabs {display:flex;background:#1f2937;border-radius:10px;overflow:hidden;}
+.tab {flex:1;text-align:center;padding:10px;}
+.active {background:#22c55e;color:black;}
+.item {background:#1f2937;padding:10px;border-radius:10px;margin-top:8px;}
+button {border:none;padding:8px;border-radius:8px;margin-top:5px;}
+input, select {width:100%;padding:8px;margin-top:5px;border-radius:8px;border:none;}
+</style>
+</head>
+<body>
+<div class="header">🚗 CarCare</div>
+<div class="container" id="app"></div>
+<script>
+let cars = JSON.parse(localStorage.getItem("cars")) || [];
+let selectedCar=null;
+let tab="entretien";
+function save(){localStorage.setItem("cars",JSON.stringify(cars));}
+function home(){
+  selectedCar=null;
+  let html="";
+  cars.forEach((c,i)=>{
+    html+=`<div class="car-card" onclick="openCar(${i})">
+    <b>${c.marque} ${c.modele}</b><br>${c.plaque}<br>${c.km} km</div>`;
+  });
+  html+=`<button onclick="addCar()" style="position:fixed;bottom:20px;right:20px;width:65px;height:65px;border-radius:50%;background:#22c55e;font-size:30px;">+</button>`;
+  app.innerHTML=html;
+}
+function openCar(i){selectedCar=i;tab="entretien";render();}
+function switchTab(t){tab=t;render();}
+function render(){
+  const car=cars[selectedCar];
+  app.innerHTML=`
+  <button onclick="home()">⬅</button>
+  <div class="panel">${car.marque} ${car.modele}<br>${car.plaque}<br>${car.km} km</div>
+  <div class="tabs">
+  <div class="tab ${tab==="entretien"?"active":""}" onclick="switchTab('entretien')">Entretien</div>
+  <div class="tab ${tab==="historique"?"active":""}" onclick="switchTab('historique')">Historique</div>
+  </div>
+  ${tab==="entretien"?renderEntretien():renderHist()}
+  `;
+}
+function renderEntretien(){
+  const car=cars[selectedCar];
+  return `<div class="panel">
+  ${car.entretiens.map((e,i)=>`
+  <div class="item">${e.type}<br>${e.date}
+  <br><button onclick="done(${i})">✔</button>
+  </div>`).join("")}
+  </div>`;
+}
+function renderHist(){
+  const car=cars[selectedCar];
+  return `<div class="panel">
+  ${car.historique.map(e=>`<div class="item">${e.type} ${e.km}km<br>${e.date}</div>`).join("")}
+  </div>`;
+}
+function addCar(){
+  const m=prompt("Marque");
+  const mo=prompt("Modèle");
+  const p=prompt("Plaque");
+  const km=prompt("Km");
+  if(!m)return;
+  cars.push({marque:m,modele:mo,plaque:p,km,entretiens:[],historique:[]});
+  save();home();
+}
+function done(i){
+  const car=cars[selectedCar];
+  const e=car.entretiens[i];
+  const km=prompt("Km ?");
+  car.km=km;
+  car.historique.unshift({...e,km});
+  car.entretiens.splice(i,1);
+  save();render();
+}
+if("serviceWorker" in navigator){
+navigator.serviceWorker.register("service-worker.js");
+}
+home();
+</script>
+</body>
+</html>
