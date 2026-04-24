@@ -1,13 +1,12 @@
-const CACHE_NAME = "carcare-v1";
+const CACHE_NAME = "carcare-v2";
 
 const urlsToCache = [
   "/",
   "/index.html",
-  "/manifest.json",
-  "/icon-192.png",
-  "/icon-512.png"
+  "/manifest.json"
 ];
 
+// INSTALL
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -15,9 +14,12 @@ self.addEventListener("install", event => {
   );
 });
 
+// FETCH (offline)
 self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request)
-      .then(response => response || fetch(event.request))
+      .then(response => {
+        return response || fetch(event.request);
+      })
   );
 });
